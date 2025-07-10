@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Thumbnail Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 320px;
+            background-color: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        
+        .canvas-wrapper {
+            background-color: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .canvas-info {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        #canvas {
+            border: 1px solid #d1d5db;
+            max-width: 800px;
+            max-height: 450px;
+            cursor: grab;
+        }
+        
+        #canvas:active {
+            cursor: grabbing;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background-color: #7c3aed;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #6d28d9;
+        }
+        
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #047857;
+        }
+        
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .layer-item {
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        
+        .layer-item.selected {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+        
+        .layer-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .layer-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .slider-label {
+            font-size: 12px;
+            color: #6b7280;
+            min-width: 80px;
+        }
+        
+        .slider {
+            flex: 1;
+        }
+        
+        .slider-value {
+            font-size: 12px;
+            color: #374151;
+            min-width: 40px;
+        }
+        
+        .text-controls {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+        
+        .style-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .style-btn {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .style-btn.active {
+            background-color: #2563eb;
+            color: white;
+        }
+        
+        .export-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .export-modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .export-modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        .export-modal-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="btn-grid">
+                <button class="btn btn-primary" onclick="addImages()">+ Add Images</button>
+                <button class="btn btn-secondary" onclick="addTextLayer()">+ Add Text</button>
+            </div>
+            
+            <div class="form-group">
+                <h3 style="margin-bottom: 8px;">Layers (<span id="layer-count">0</span>)</h3>
+                <div id="layers-list"></div>
+            </div>
+            
+            <div id="layer-properties" class="hidden">
+                <h3 style="margin-bottom: 16px;">Layer Properties</h3>
+                <div id="layer-controls"></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h1>YouTube Thumbnail Creator</h1>
+                <button class="btn btn-success" onclick="showExportModal()">Export</button>
+            </div>
+            
+            <div class="canvas-container">
+                <div class="canvas-wrapper">
+                    <div class="canvas-info">1920 × 1080 (Full HD) - Click and drag selected layer</div>
+                    <canvas id="canvas" width="1920" height="1080"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="export-modal" class="export-modal hidden">
+        <div class="export-modal-content">
+            <div class="export-modal-header">Export Settings</div>
+            
+            <div class="form-group">
+                <label class="form-label">Size</label>
+                <select id="export-size" class="form-control">
+                    <option value="1920x1080">1920 × 1080 (Full HD)</option>
+                    <option value="1280x720">1280 × 720 (YouTube Standard)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Format</label>
+                <select id="export-format" class="form-control" onchange="toggleQuality()">
+                    <option value="png">PNG (Lossless)</option>
+                    <option value="jpeg">JPEG (Compressed)</option>
+                </select>
+            </div>
+            
+            <div class="form-group hidden" id="quality-control">
+                <label class="form-label">Quality: <span id="quality-value">90</span>%</label>
+                <input type="range" id="export-quality" min="10" max="100" value="90" class="form-control" oninput="updateQuality()">
+            </div>
+            
+            <div class="export-modal-footer">
+                <button class="btn" onclick="hideExportModal()">Cancel</button>
+                <button class="btn btn-success" onclick="exportImage()">Export</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="file-input" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+    
+    <script>
+        let layers = [];
+        let selectedLayer = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Canvas setup
+        canvas.width = 1920;
+        canvas.height = 1080;
+        
+        function addImages() {
+            document.getElementById('file-input').click();
+        }
+        
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const newLayer = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            type: 'image',
+                            image: img,
+                            x: 0,
+                            y: 0,
+                            width: img.width,
+                            height: img.height,
+                            opacity: 1,
+                            visible: true,
+                            rotation: 0,
+                            scale: 1
+                        };
+                        layers.unshift(newLayer);
+                        selectedLayer = newLayer.id;
+                        updateUI();
+                        drawCanvas();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            event.target.value = '';
+        }
+        
+        function addTextLayer() {
+            const newLayer = {
+                id: Date.now() + Math.random(),
+                name: 'Text Layer',
+                type: 'text',
+                x: 100,
+                y: 100,
+                width: 200,
+                height: 50,
+                opacity: 1,
+                visible: true,
+                rotation: 0,
+                scale: 1,
+                text: 'Sample Text',
+                fontSize: 48,
+                fontFamily: 'Arial',
+                fontWeight: 'normal',
+                fontStyle: 'normal',
+                fontColor: '#000000',
+                stroke1: { width: 0, color: '#ffffff' },
+                stroke2: { width: 0, color: '#000000' },
+                shadow: { enabled: false, x: 2, y: 2, blur: 4, color: '#000000' },
+                glow: { enabled: false, blur: 10, color: '#ffffff', opacity: 0.8 }
+            };
+            
+            // Calculate text bounds
+            const bounds = calculateTextBounds(newLayer);
+            newLayer.width = bounds.width;
+            newLayer.height = bounds.height;
+            
+            layers.unshift(newLayer);
+            selectedLayer = newLayer.id;
+            updateUI();
+            drawCanvas();
+        }
+        
+        function calculateTextBounds(layer) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.font = `${layer.fontStyle} ${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+            const metrics = tempCtx.measureText(layer.text);
+            
+            const textWidth = metrics.width;
+            const textHeight = layer.fontSize;
+            
+            const totalStrokeWidth = Math.max(layer.stroke1.width, layer.stroke2.width);
+            const padding = totalStrokeWidth + 10;
+            
+            return {
+                width: textWidth + padding * 2,
+                height: textHeight + padding * 2
+            };
+        }
+        
+        function updateUI() {
+            document.getElementById('layer-count').textContent = layers.length;
+            
+            const layersList = document.getElementById('layers-list');
+            layersList.innerHTML = '';
+            
+            layers.forEach((layer, index) => {
+                const layerDiv = document.createElement('div');
+                layerDiv.className = `layer-item ${selectedLayer === layer.id ? 'selected' : ''}`;
+                layerDiv.onclick = () => selectLayer(layer.id);
+                
+                layerDiv.innerHTML = `
+                    <div class="layer-item-header">
+                        <span>${layer.name}</span>
+                        <div class="layer-controls">
+                            <button class="btn btn-small" onclick="event.stopPropagation(); toggleVisibility('${layer.id}')">${layer.visible ? '👁' : '🚫'}</button>
+                            <button class="btn btn-small" onclick="event.stopPropagation(); moveLayer('${layer.id}', 'up')" ${index === 0 ? 'disabled' : ''}>↑</button>
+                            <button class="btn btn-small" onclick="event.stopPropagation(); moveLayer('${layer.id}', 'down')" ${index === layers.length - 1 ? 'disabled' : ''}>↓</button>
+                            <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteLayer('${layer.id}')">×</button>
+                        </div>
+                    </div>
+                `;
+                
+                layersList.appendChild(layerDiv);
+            });
+            
+            updateLayerProperties();
+        }
+        
+        function selectLayer(layerId) {
+            selectedLayer = selectedLayer === layerId ? null : layerId;
+            updateUI();
+        }
+        
+        function updateLayerProperties() {
+            const propertiesDiv = document.getElementById('layer-properties');
+            const controlsDiv = document.getElementById('layer-controls');
+            
+            if (!selectedLayer) {
+                propertiesDiv.classList.add('hidden');
+                return;
+            }
+            
+            propertiesDiv.classList.remove('hidden');
+            const layer = layers.find(l => l.id === selectedLayer);
+            
+            if (!layer) return;
+            
+            controlsDiv.innerHTML = `
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">X Position</label>
+                        <input type="number" class="form-control" value="${Math.round(layer.x)}" step="5" onchange="updateLayerProperty('x', parseInt(this.value) || 0)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Y Position</label>
+                        <input type="number" class="form-control" value="${Math.round(layer.y)}" step="5" onchange="updateLayerProperty('y', parseInt(this.value) || 0)">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="slider-container">
+                        <label class="slider-label">Scale:</label>
+                        <input type="range" class="slider" min="0.1" max="3" step="0.01" value="${layer.scale}" oninput="updateLayerProperty('scale', parseFloat(this.value))">
+                        <span class="slider-value">${layer.scale.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="slider-container">
+                        <label class="slider-label">Opacity:</label>
+                        <input type="range" class="slider" min="0" max="1" step="0.01" value="${layer.opacity}" oninput="updateLayerProperty('opacity', parseFloat(this.value))">
+                        <span class="slider-value">${Math.round(layer.opacity * 100)}%</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="slider-container">
+                        <label class="slider-label">Rotation:</label>
+                        <input type="range" class="slider" min="-180" max="180" step="1" value="${layer.rotation}" oninput="updateLayerProperty('rotation', parseInt(this.value))">
+                        <span class="slider-value">${layer.rotation}°</span>
+                    </div>
+                </div>
+                
+                ${layer.type === 'text' ? `
+                <div class="text-controls">
+                    <div class="form-group">
+                        <label class="form-label">Text</label>
+                        <textarea class="form-control" rows="2" onchange="updateLayerProperty('text', this.value)">${layer.text}</textarea>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Font Size</label>
+                            <input type="number" class="form-control" value="${layer.fontSize}" min="8" max="200" onchange="updateLayerProperty('fontSize', parseInt(this.value) || 12)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Font Family</label>
+                            <select class="form-control" onchange="updateLayerProperty('fontFamily', this.value)">
+                                <option value="Arial" ${layer.fontFamily === 'Arial' ? 'selected' : ''}>Arial</option>
+                                <option value="Helvetica" ${layer.fontFamily === 'Helvetica' ? 'selected' : ''}>Helvetica</option>
+                                <option value="Times New Roman" ${layer.fontFamily === 'Times New Roman' ? 'selected' : ''}>Times New Roman</option>
+                                <option value="Georgia" ${layer.fontFamily === 'Georgia' ? 'selected' : ''}>Georgia</option>
+                                <option value="Verdana" ${layer.fontFamily === 'Verdana' ? 'selected' : ''}>Verdana</option>
+                                <option value="Courier New" ${layer.fontFamily === 'Courier New' ? 'selected' : ''}>Courier New</option>
+                                <option value="Impact" ${layer.fontFamily === 'Impact' ? 'selected' : ''}>Impact</option>
+                                <option value="Comic Sans MS" ${layer.fontFamily === 'Comic Sans MS' ? 'selected' : ''}>Comic Sans MS</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Text Style</label>
+                        <div class="style-buttons">
+                            <button class="style-btn ${layer.fontWeight === 'bold' ? 'active' : ''}" onclick="toggleTextStyle('fontWeight', 'bold')">B</button>
+                            <button class="style-btn ${layer.fontStyle === 'italic' ? 'active' : ''}" onclick="toggleTextStyle('fontStyle', 'italic')">I</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Font Color</label>
+                        <input type="color" class="form-control" value="${layer.fontColor}" onchange="updateLayerProperty('fontColor', this.value)">
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        function updateLayerProperty(property, value) {
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (!layer) return;
+            
+            layer[property] = value;
+            
+            // Update text bounds if necessary
+            if (layer.type === 'text' && ['text', 'fontSize', 'fontFamily', 'fontWeight', 'fontStyle'].includes(property)) {
+                const bounds = calculateTextBounds(layer);
+                layer.width = bounds.width;
+                layer.height = bounds.height;
+            }
+            
+            drawCanvas();
+            updateUI();
+        }
+        
+        function toggleTextStyle(property, value) {
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (!layer) return;
+            
+            layer[property] = layer[property] === value ? 'normal' : value;
+            
+            const bounds = calculateTextBounds(layer);
+            layer.width = bounds.width;
+            layer.height = bounds.height;
+            
+            drawCanvas();
+            updateUI();
+        }
+        
+        function toggleVisibility(layerId) {
+            const layer = layers.find(l => l.id === layerId);
+            if (layer) {
+                layer.visible = !layer.visible;
+                drawCanvas();
+                updateUI();
+            }
+        }
+        
+        function moveLayer(layerId, direction) {
+            const index = layers.findIndex(l => l.id === layerId);
+            if (index === -1) return;
+            
+            if (direction === 'up' && index > 0) {
+                [layers[index], layers[index - 1]] = [layers[index - 1], layers[index]];
+            } else if (direction === 'down' && index < layers.length - 1) {
+                [layers[index], layers[index + 1]] = [layers[index + 1], layers[index]];
+            }
+            
+            drawCanvas();
+            updateUI();
+        }
+        
+        function deleteLayer(layerId) {
+            layers = layers.filter(l => l.id !== layerId);
+            if (selectedLayer === layerId) {
+                selectedLayer = null;
+            }
+            drawCanvas();
+            updateUI();
+        }
+        
+        function drawCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw layers in reverse order
+            [...layers].reverse()
+                .filter(layer => layer.visible)
+                .forEach(layer => {
+                    ctx.save();
+                    ctx.globalAlpha = layer.opacity;
+                    
+                    if (layer.type === 'image') {
+                        const centerX = layer.x + (layer.width * layer.scale) / 2;
+                        const centerY = layer.y + (layer.height * layer.scale) / 2;
+                        
+                        ctx.translate(centerX, centerY);
+                        ctx.rotate((layer.rotation * Math.PI) / 180);
+                        ctx.scale(layer.scale, layer.scale);
+                        
+                        ctx.drawImage(
+                            layer.image,
+                            -layer.width / 2,
+                            -layer.height / 2,
+                            layer.width,
+                            layer.height
+                        );
+                    } else if (layer.type === 'text') {
+                        const centerX = layer.x + (layer.width * layer.scale) / 2;
+                        const centerY = layer.y + (layer.height * layer.scale) / 2;
+                        
+                        ctx.translate(centerX, centerY);
+                        ctx.rotate((layer.rotation * Math.PI) / 180);
+                        ctx.scale(layer.scale, layer.scale);
+                        
+                        ctx.font = `${layer.fontStyle} ${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = layer.fontColor;
+                        ctx.fillText(layer.text, 0, 0);
+                    }
+                    
+                    ctx.restore();
+                    
+                    // Draw selection outline
+                    if (selectedLayer === layer.id) {
+                        ctx.strokeStyle = '#2563eb';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeRect(
+                            layer.x - 2,
+                            layer.y - 2,
+                            layer.width * layer.scale + 4,
+                            layer.height * layer.scale + 4
+                        );
+                        ctx.setLineDash([]);
+                    }
+                });
+        }
+        
+        // Canvas mouse events
+        canvas.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        // Prevent canvas events from interfering with UI controls
+        document.addEventListener('mousedown', function(e) {
+            // If clicking on a slider, input, or button, don't start canvas dragging
+            if (e.target.type === 'range' || e.target.type === 'number' || 
+                e.target.type === 'text' || e.target.type === 'color' || 
+                e.target.type === 'file' || e.target.tagName === 'SELECT' || 
+                e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA' ||
+                e.target.closest('.sidebar')) {
+                return;
+            }
+        });
+        
+        function handleMouseDown(e) {
+            // Only handle canvas clicks
+            if (e.target !== canvas) return;
+            
+            if (!selectedLayer) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (!layer) return;
+            
+            const layerBounds = {
+                left: layer.x,
+                top: layer.y,
+                right: layer.x + layer.width * layer.scale,
+                bottom: layer.y + layer.height * layer.scale
+            };
+            
+            if (mouseX >= layerBounds.left && mouseX <= layerBounds.right &&
+                mouseY >= layerBounds.top && mouseY <= layerBounds.bottom) {
+                isDragging = true;
+                dragOffset = {
+                    x: mouseX - layer.x,
+                    y: mouseY - layer.y
+                };
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault(); // Prevent other events
+            }
+        }
+        
+        function handleMouseMove(e) {
+            if (!isDragging || !selectedLayer) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (layer) {
+                layer.x = mouseX - dragOffset.x;
+                layer.y = mouseY - dragOffset.y;
+                drawCanvas();
+                updateUI();
+            }
+        }
+        
+        function handleMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                canvas.style.cursor = 'grab';
+            }
+        }
+        
+        // Export functionality
+        function showExportModal() {
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+        
+        function hideExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+        
+        function toggleQuality() {
+            const format = document.getElementById('export-format').value;
+            const qualityControl = document.getElementById('quality-control');
+            
+            if (format === 'jpeg') {
+                qualityControl.classList.remove('hidden');
+            } else {
+                qualityControl.classList.add('hidden');
+            }
+        }
+        
+        function updateQuality() {
+            const value = document.getElementById('export-quality').value;
+            document.getElementById('quality-value').textContent = value;
+        }
+        
+        function exportImage() {
+            const size = document.getElementById('export-size').value;
+            const format = document.getElementById('export-format').value;
+            const quality = parseInt(document.getElementById('export-quality').value) / 100;
+            
+            const [width, height] = size.split('x').map(Number);
+            
+            const exportCanvas = document.createElement('canvas');
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            exportCanvas.width = width;
+            exportCanvas.height = height;
+            
+            const scaleX = width / canvas.width;
+            const scaleY = height / canvas.height;
+            
+            exportCtx.fillStyle = '#ffffff';
+            exportCtx.fillRect(0, 0, width, height);
+            
+            [...layers].reverse()
+                .filter(layer => layer.visible)
+                .forEach(layer => {
+                    exportCtx.save();
+                    exportCtx.globalAlpha = layer.opacity;
+                    
+                    if (layer.type === 'image') {
+                        const centerX = (layer.x + (layer.width * layer.scale) / 2) * scaleX;
+                        const centerY = (layer.y + (layer.height * layer.scale) / 2) * scaleY;
+                        
+                        exportCtx.translate(centerX, centerY);
+                        exportCtx.rotate((layer.rotation * Math.PI) / 180);
+                        exportCtx.scale(layer.scale * scaleX, layer.scale * scaleY);
+                        
+                        exportCtx.drawImage(
+                            layer.image,
+                            -layer.width / 2,
+                            -layer.height / 2,
+                            layer.width,
+                            layer.height
+                        );
+                    } else if (layer.type === 'text') {
+                        const centerX = (layer.x + (layer.width * layer.scale) / 2) * scaleX;
+                        const centerY = (layer.y + (layer.height * layer.scale) / 2) * scaleY;
+                        
+                        exportCtx.translate(centerX, centerY);
+                        exportCtx.rotate((layer.rotation * Math.PI) / 180);
+                        exportCtx.scale(layer.scale * scaleX, layer.scale * scaleY);
+                        
+                        exportCtx.font = `${layer.fontStyle} ${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+                        exportCtx.textAlign = 'center';
+                        exportCtx.textBaseline = 'middle';
+                        exportCtx.fillStyle = layer.fontColor;
+                        exportCtx.fillText(layer.text, 0, 0);
+                    }
+                    
+                    exportCtx.restore();
+                });
+            
+            const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+            const dataURL = exportCanvas.toDataURL(mimeType, quality);
+            
+            const link = document.createElement('a');
+            link.download = `youtube-thumbnail-${Date.now()}.${format}`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            hideExportModal();
+        }
+        
+        // Initialize
+        drawCanvas();
+        updateUI();
+    </script>
+</body>
+</html>
