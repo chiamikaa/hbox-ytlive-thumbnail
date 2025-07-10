@@ -190,26 +190,19 @@
             gap: 8px;
         }
         
-        .slider-container {
+        .number-control {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
         
-        .slider-label {
-            font-size: 12px;
-            color: #6b7280;
-            min-width: 80px;
-        }
-        
-        .slider {
+        .number-control input {
             flex: 1;
+            text-align: center;
         }
         
-        .slider-value {
-            font-size: 12px;
-            color: #374151;
-            min-width: 40px;
+        .number-control button {
+            min-width: 30px;
         }
         
         .text-controls {
@@ -510,38 +503,44 @@
                 </div>
                 
                 <div class="form-group">
-                    <div class="slider-container">
-                        <label class="slider-label">Scale:</label>
-                        <input type="range" class="slider" min="0.1" max="3" step="0.01" value="${layer.scale}" 
-                               oninput="updateLayerProperty('scale', parseFloat(this.value))"
-                               onmousedown="event.stopPropagation()" 
-                               onmouseup="event.stopPropagation()"
-                               onmousemove="event.stopPropagation()">
-                        <span class="slider-value">${layer.scale.toFixed(2)}</span>
+                    <label class="form-label">Scale: ${layer.scale.toFixed(2)}</label>
+                    <div class="number-control">
+                        <button class="btn btn-small" onclick="adjustProperty('scale', -0.1)">-</button>
+                        <input type="number" class="form-control" value="${layer.scale.toFixed(2)}" 
+                               min="0.1" max="5" step="0.01" 
+                               onchange="updateLayerProperty('scale', parseFloat(this.value) || 1)">
+                        <button class="btn btn-small" onclick="adjustProperty('scale', 0.1)">+</button>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <div class="slider-container">
-                        <label class="slider-label">Opacity:</label>
-                        <input type="range" class="slider" min="0" max="1" step="0.01" value="${layer.opacity}" 
-                               oninput="updateLayerProperty('opacity', parseFloat(this.value))"
-                               onmousedown="event.stopPropagation()" 
-                               onmouseup="event.stopPropagation()"
-                               onmousemove="event.stopPropagation()">
-                        <span class="slider-value">${Math.round(layer.opacity * 100)}%</span>
+                    <label class="form-label">Opacity: ${Math.round(layer.opacity * 100)}%</label>
+                    <div class="number-control">
+                        <button class="btn btn-small" onclick="adjustProperty('opacity', -0.1)">-</button>
+                        <input type="number" class="form-control" value="${Math.round(layer.opacity * 100)}" 
+                               min="0" max="100" step="1" 
+                               onchange="updateLayerProperty('opacity', (parseInt(this.value) || 0) / 100)">
+                        <button class="btn btn-small" onclick="adjustProperty('opacity', 0.1)">+</button>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <div class="slider-container">
-                        <label class="slider-label">Rotation:</label>
-                        <input type="range" class="slider" min="-180" max="180" step="1" value="${layer.rotation}" 
-                               oninput="updateLayerProperty('rotation', parseInt(this.value))"
-                               onmousedown="event.stopPropagation()" 
-                               onmouseup="event.stopPropagation()"
-                               onmousemove="event.stopPropagation()">
-                        <span class="slider-value">${layer.rotation}°</span>
+                    <label class="form-label">Rotation: ${layer.rotation}°</label>
+                    <div class="number-control">
+                        <button class="btn btn-small" onclick="adjustProperty('rotation', -15)">-</button>
+                        <input type="number" class="form-control" value="${layer.rotation}" 
+                               min="-180" max="180" step="1" 
+                               onchange="updateLayerProperty('rotation', parseInt(this.value) || 0)">
+                        <button class="btn btn-small" onclick="adjustProperty('rotation', 15)">+</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Transform</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn ${layer.flipped ? 'btn-primary' : ''}" onclick="toggleFlip()" style="flex: 1;">
+                            ${layer.flipped ? '↔️ Flipped' : '↔️ Flip H'}
+                        </button>
                     </div>
                 </div>
                 
@@ -602,6 +601,33 @@
                 layer.height = bounds.height;
             }
             
+            drawCanvas();
+            updateUI();
+        }
+        
+        function adjustProperty(property, delta) {
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (!layer) return;
+            
+            let newValue = layer[property] + delta;
+            
+            // Apply limits
+            if (property === 'scale') {
+                newValue = Math.max(0.1, Math.min(5, newValue));
+            } else if (property === 'opacity') {
+                newValue = Math.max(0, Math.min(1, newValue));
+            } else if (property === 'rotation') {
+                newValue = Math.max(-180, Math.min(180, newValue));
+            }
+            
+            updateLayerProperty(property, newValue);
+        }
+        
+        function toggleFlip() {
+            const layer = layers.find(l => l.id === selectedLayer);
+            if (!layer) return;
+            
+            layer.flipped = !layer.flipped;
             drawCanvas();
             updateUI();
         }
@@ -669,7 +695,7 @@
                         
                         ctx.translate(centerX, centerY);
                         ctx.rotate((layer.rotation * Math.PI) / 180);
-                        ctx.scale(layer.scale, layer.scale);
+                        ctx.scale(layer.scale * (layer.flipped ? -1 : 1), layer.scale);
                         
                         ctx.drawImage(
                             layer.image,
@@ -684,7 +710,7 @@
                         
                         ctx.translate(centerX, centerY);
                         ctx.rotate((layer.rotation * Math.PI) / 180);
-                        ctx.scale(layer.scale, layer.scale);
+                        ctx.scale(layer.scale * (layer.flipped ? -1 : 1), layer.scale);
                         
                         ctx.font = `${layer.fontStyle} ${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
                         ctx.textAlign = 'center';
